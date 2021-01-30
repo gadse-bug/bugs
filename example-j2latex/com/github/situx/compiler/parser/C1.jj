@@ -1,0 +1,1102 @@
+/**
+ * JavaCC file
+ */ 
+options {
+  JDK_VERSION = "1.6";
+  STATIC = false;
+}
+PARSER_BEGIN(C1)
+
+package parser;
+import java.io.*;
+import treej.*;
+import treej.Number;
+import visitorj.*;
+import java.util.*;
+
+public class C1 {
+
+}
+PARSER_END(C1)
+
+SKIP :
+{
+ 	" "
+|	"\r"
+|	"\t"
+|	"\n"
+
+}
+TOKEN : /* KEYWORDS */
+{
+	< FUNCTION: "function" >
+| 	< CONSTRUCTOR: "cons" >
+|   < FINAL: "final" >
+|   < GOTO: "goto" >
+|   < STATIC: "static" >
+|   < TRANSIENT: "transient" >
+|   < PUBLIC: "public" >
+|   < PRIVATE: "private" >
+|   < PROTECTED: "protected" >
+|   < CLASS: "class" >
+|   < INTERFACE: "interface" >
+|   < ABSTRACT: "abstract" >
+|   < BOOLEAN: "boolean" >
+|   < BYTE: "byte" >
+|   < DOUBLE: "double" >
+|   < INT: "int" >
+|   < VOID: "void" >
+|   < LONG: "long" >
+|   < SHORT: "short" >
+|   < FLOAT: "float" >
+|   < VOLATILE: "volatile" >
+|   < SYNCHRONIZED: "synchronized" >
+|   < FOR: "for" >
+|   < WHILE: "while" >
+|   < DO:  "do" >
+|   < IF:  "if" >
+|   < ELSE: "else" >
+|   < ELSEIF: "else if" >
+|   < TRY:  "try" >
+|   < CATCH: "catch" >
+|   < FINALLY: "finally" >
+|   < THROWS: "throws" >
+|   < THROW: "throw" >
+|   < SWITCH: "switch" >
+|   < CASE: "case" >
+|   < CONTINUE: "continue" >
+|   < EXTENDS: "extends" >
+|   < IMPLEMENTS: "implements" >
+|   < IMPORT: "import" >
+|   < INSTANCEOF: "instanceof" >
+|   < THIS:  "this" >
+|   < TRUE:  "true" >
+|   < FALSE: "false" >
+|   < NULL:  "null" >
+|   < NEW:   "new" >
+|   < RETURN: "return" >
+|   < PACKAGE: "package" >
+|   < BREAK: "break" >
+|   < DEFT: "default" >
+|   < NATIVE: "native" >
+|   < STRICTFP: "strictfp" >
+|   < ENUM: "enum" >
+|   < CHAR: "char" >
+
+}
+
+SPECIAL_TOKEN :
+{
+  <SINGLE_LINE_COMMENT: "//" (~["\n","\r"])* ("\n"|"\r"|"\r\n")? >
+}
+
+MORE :
+{
+  <"/**" ~["/"]> { input_stream.backup(1); } : IN_JAVA_DOC_COMMENT
+|
+  <"/*"> : IN_MULTI_LINE_COMMENT
+}
+
+<IN_JAVA_DOC_COMMENT>
+SPECIAL_TOKEN :
+{
+  <JAVA_DOC_COMMENT: "*/" > : DEFAULT
+}
+
+<IN_MULTI_LINE_COMMENT>
+SPECIAL_TOKEN :
+{
+  <MULTI_LINE_COMMENT: "*/" > : DEFAULT
+}
+
+<IN_JAVA_DOC_COMMENT, IN_MULTI_LINE_COMMENT>
+MORE :
+{
+  < ~[] >
+}
+
+
+TOKEN : /* OPERATORS */
+{
+    < DIVEQ: "/=" >
+|	< DIV: "/" >
+|   < MINUSEQ : "-=" >
+|   < MINUSMINUS: "--" >
+|	< MINUS: "-" >
+|   < MODEQ: "%=" >
+|   < MODULO : "%" >
+|   < MULTEQ  : "*=" >
+|	< MULT: "*" >
+|   < PLUSEQ  : "+=" >
+|   < PLUSPLUS : "++" >
+| 	< PLUS: "+" >
+|	< LPAR: "(" >
+|	< RPAR: ")" >
+|	< LBRK: "{" >
+|	< RBRK: "}" >
+|   < LBRC: "[" >
+|   < RBRC: "]" >
+|	< COMMA: "," >
+| 	< Equals : "==" >
+| 	< NotEqual : "!=" >
+|   < NOT : "!" >
+|   < ANDEQ: "&=" >
+|   < ANDAND: "&&" >
+| 	< AND : "&" >
+|   < OROR: "||" >
+|   < OREQ: "|=" >
+| 	< OR : "|" >
+|   < SHIFTRIGHTEQEQ: ">>>=" >
+|   < SHIFTRIGHTDOUBLE: ">>>" >
+|   < SHIFTRIGHTEQ: ">>=" >
+| 	< GREATEQ : ">=" >
+|   < SHIFTRIGHT: ">>" >
+| 	< GREATER : ">" >
+|   < SHIFTLEFTEQ: "<<=" >
+| 	< SMALLEQ : "<=" >
+|   < SHIFTLEFT: "<<" >
+| 	< SMALLER : "<" >
+|   < SEM : ";" >
+|   < INIT: "=" >
+|   < DP: ":" >
+|   < AT: "@" >
+|   < CHARTK: "'" >
+|   < STRTK: "\"" >
+|   < QUEST: "?" >
+|   < BITOREQ: "^=" >
+|   < BITOR: "^" >
+|   < TILDE: "~" >
+
+}
+TOKEN :
+{
+    < ALPHAB: ["A" - "Z"] >
+|   < FINIDENT: (< ALPHAB >(< ALPHAC >)*) >
+|   < CLASSIDENT: (<ALPHAB> (<ALPHNUM>)*) >
+|   < VARIDENT:  (<ALPHAS> (<ALPHNUM>)*) >
+|   < ELEMIDENT: ((< CLASSIDENT >["."])? (< THIS >["."])?
+	(< PACKIDENT > |(< VARIDENT > ["."])*(< FINIDENT >)) ) >
+|   < PACKIDENT:  ((< VARIDENT >["."])* (<VARIDENT >)) >
+|   < IMPORTIDENT:  ((< VARIDENT >["."])* (<CLASSIDENT > | ["*"]))>
+|   < FUNCALLIDENT: (< ALPHAS >  (< ALPHA >)*) >
+|   < ENUMIDENT: (< CLASSIDENT > | < VARIDENT > | < FINIDENT > |< ALPHA >)+ >
+|   < CONSTANTD: ( <DIGIT> | < OCTDIGIT >)["."]( <DIGIT> | < OCTDIGIT >)? >
+|   < CONSTANTF: ( <DIGIT> | < OCTDIGIT >)(["."]( <DIGIT> | < OCTDIGIT >))?["f","F"] >
+|   < CONSTANTL: ( <DIGIT> | < HEXDIGIT > | < OCTDIGIT >)["L","l"] >
+|   < CONSTANTI: ( <DIGIT> | < HEXDIGIT > | < OCTDIGIT >) >
+|   < CHARDEF: (["'"]< ALPHA >["'"]) >
+|   < STRINGDEF: (["\""](< ALPHAALL >)*["\""]) >
+|   < ANNOTATION: (< AT > (< ALPHA >)*) >
+|   < #ALPHNUM: ( <DIGIT>|<ALPHA> ) >
+|   < #DIGIT: (["0" - "9"])+ >
+|   < #HEXDIGIT: "0" ["x","X"](["0" - "9","a"-"f","A"-"F"])+ >
+|   < #OCTDIGIT: "0" (["0" - "7"])* >
+|   < ALPHA: ["A" - "Z","a"-"z"] >
+|   < ALPHAALL: ["A" - "Z","a" - "z","0" - "9",".","'",",","!","?","-","_","+","{","}"] >
+|   < #ALPHAC: ["A" - "Z","0" - "9","_"] >
+|   < #ALPHAS: ["a" - "z" ] >
+|   < #ALPHAP: ["a" - "z","0" - "9","." ] >
+|   < #LETTER:
+      [  // all chars for which Character.isIdentifierPart is true
+         "\u0000"-"\u0008",
+         "\u000e"-"\u001b",
+         "\u0024",          // "$"
+         "\u0030"-"\u0039", // "0"-"9"
+         "\u0041"-"\u005a", // "A"-"Z"
+         "\u005f",          // "_"
+         "\u0061"-"\u007a", // "a"-"z"
+         "\u007f"-"\u009f",
+         "\u00a2"-"\u00a5",
+         "\u00aa",
+         "\u00ad",
+         "\u00b5",
+         "\u00ba",
+         "\u00c0"-"\u00d6",
+         "\u00d8"-"\u00f6",
+         "\u00f8"-"\u0236",
+         "\u0250"-"\u02c1",
+         "\u02c6"-"\u02d1",
+         "\u02e0"-"\u02e4",
+         "\u02ee",
+         "\u0300"-"\u0357",
+         "\u035d"-"\u036f",
+         "\u037a",
+         "\u0386",
+         "\u0388"-"\u038a",
+         "\u038c",
+         "\u038e"-"\u03a1",
+         "\u03a3"-"\u03ce",
+         "\u03d0"-"\u03f5",
+         "\u03f7"-"\u03fb",
+         "\u0400"-"\u0481",
+         "\u0483"-"\u0486",
+         "\u048a"-"\u04ce",
+         "\u04d0"-"\u04f5",
+         "\u04f8"-"\u04f9",
+         "\u0500"-"\u050f",
+         "\u0531"-"\u0556",
+         "\u0559",
+         "\u0561"-"\u0587",
+         "\u0591"-"\u05a1",
+         "\u05a3"-"\u05b9",
+         "\u05bb"-"\u05bd",
+         "\u05bf",
+         "\u05c1"-"\u05c2",
+         "\u05c4",
+         "\u05d0"-"\u05ea",
+         "\u05f0"-"\u05f2",
+         "\u0600"-"\u0603",
+         "\u0610"-"\u0615",
+         "\u0621"-"\u063a",
+         "\u0640"-"\u0658",
+         "\u0660"-"\u0669",
+         "\u066e"-"\u06d3",
+         "\u06d5"-"\u06dd",
+         "\u06df"-"\u06e8",
+         "\u06ea"-"\u06fc",
+         "\u06ff",
+         "\u070f"-"\u074a",
+         "\u074d"-"\u074f",
+         "\u0780"-"\u07b1",
+         "\u0901"-"\u0939",
+         "\u093c"-"\u094d",
+         "\u0950"-"\u0954",
+         "\u0958"-"\u0963",
+         "\u0966"-"\u096f",
+         "\u0981"-"\u0983",
+         "\u0985"-"\u098c",
+         "\u098f"-"\u0990",
+         "\u0993"-"\u09a8",
+         "\u09aa"-"\u09b0",
+         "\u09b2",
+         "\u09b6"-"\u09b9",
+         "\u09bc"-"\u09c4",
+         "\u09c7"-"\u09c8",
+         "\u09cb"-"\u09cd",
+         "\u09d7",
+         "\u09dc"-"\u09dd",
+         "\u09df"-"\u09e3",
+         "\u09e6"-"\u09f3",
+         "\u0a01"-"\u0a03",
+         "\u0a05"-"\u0a0a",
+         "\u0a0f"-"\u0a10",
+         "\u0a13"-"\u0a28",
+         "\u0a2a"-"\u0a30",
+         "\u0a32"-"\u0a33",
+         "\u0a35"-"\u0a36",
+         "\u0a38"-"\u0a39",
+         "\u0a3c",
+         "\u0a3e"-"\u0a42",
+         "\u0a47"-"\u0a48",
+         "\u0a4b"-"\u0a4d",
+         "\u0a59"-"\u0a5c",
+         "\u0a5e",
+         "\u0a66"-"\u0a74",
+         "\u0a81"-"\u0a83",
+         "\u0a85"-"\u0a8d",
+         "\u0a8f"-"\u0a91",
+         "\u0a93"-"\u0aa8",
+         "\u0aaa"-"\u0ab0",
+         "\u0ab2"-"\u0ab3",
+         "\u0ab5"-"\u0ab9",
+         "\u0abc"-"\u0ac5",
+         "\u0ac7"-"\u0ac9",
+         "\u0acb"-"\u0acd",
+         "\u0ad0",
+         "\u0ae0"-"\u0ae3",
+         "\u0ae6"-"\u0aef",
+         "\u0af1",
+         "\u0b01"-"\u0b03",
+         "\u0b05"-"\u0b0c",
+         "\u0b0f"-"\u0b10",
+         "\u0b13"-"\u0b28",
+         "\u0b2a"-"\u0b30",
+         "\u0b32"-"\u0b33",
+         "\u0b35"-"\u0b39",
+         "\u0b3c"-"\u0b43",
+         "\u0b47"-"\u0b48",
+         "\u0b4b"-"\u0b4d",
+         "\u0b56"-"\u0b57",
+         "\u0b5c"-"\u0b5d",
+         "\u0b5f"-"\u0b61",
+         "\u0b66"-"\u0b6f",
+         "\u0b71",
+         "\u0b82"-"\u0b83",
+         "\u0b85"-"\u0b8a",
+         "\u0b8e"-"\u0b90",
+         "\u0b92"-"\u0b95",
+         "\u0b99"-"\u0b9a",
+         "\u0b9c",
+         "\u0b9e"-"\u0b9f",
+         "\u0ba3"-"\u0ba4",
+         "\u0ba8"-"\u0baa",
+         "\u0bae"-"\u0bb5",
+         "\u0bb7"-"\u0bb9",
+         "\u0bbe"-"\u0bc2",
+         "\u0bc6"-"\u0bc8",
+         "\u0bca"-"\u0bcd",
+         "\u0bd7",
+         "\u0be7"-"\u0bef",
+         "\u0bf9",
+         "\u0c01"-"\u0c03",
+         "\u0c05"-"\u0c0c",
+         "\u0c0e"-"\u0c10",
+         "\u0c12"-"\u0c28",
+         "\u0c2a"-"\u0c33",
+         "\u0c35"-"\u0c39",
+         "\u0c3e"-"\u0c44",
+         "\u0c46"-"\u0c48",
+         "\u0c4a"-"\u0c4d",
+         "\u0c55"-"\u0c56",
+         "\u0c60"-"\u0c61",
+         "\u0c66"-"\u0c6f",
+         "\u0c82"-"\u0c83",
+         "\u0c85"-"\u0c8c",
+         "\u0c8e"-"\u0c90",
+         "\u0c92"-"\u0ca8",
+         "\u0caa"-"\u0cb3",
+         "\u0cb5"-"\u0cb9",
+         "\u0cbc"-"\u0cc4",
+         "\u0cc6"-"\u0cc8",
+         "\u0cca"-"\u0ccd",
+         "\u0cd5"-"\u0cd6",
+         "\u0cde",
+         "\u0ce0"-"\u0ce1",
+         "\u0ce6"-"\u0cef",
+         "\u0d02"-"\u0d03",
+         "\u0d05"-"\u0d0c",
+         "\u0d0e"-"\u0d10",
+         "\u0d12"-"\u0d28",
+         "\u0d2a"-"\u0d39",
+         "\u0d3e"-"\u0d43",
+         "\u0d46"-"\u0d48",
+         "\u0d4a"-"\u0d4d",
+         "\u0d57",
+         "\u0d60"-"\u0d61",
+         "\u0d66"-"\u0d6f",
+         "\u0d82"-"\u0d83",
+         "\u0d85"-"\u0d96",
+         "\u0d9a"-"\u0db1",
+         "\u0db3"-"\u0dbb",
+         "\u0dbd",
+         "\u0dc0"-"\u0dc6",
+         "\u0dca",
+         "\u0dcf"-"\u0dd4",
+         "\u0dd6",
+         "\u0dd8"-"\u0ddf",
+         "\u0df2"-"\u0df3",
+         "\u0e01"-"\u0e3a",
+         "\u0e3f"-"\u0e4e",
+         "\u0e50"-"\u0e59",
+         "\u0e81"-"\u0e82",
+         "\u0e84",
+         "\u0e87"-"\u0e88",
+         "\u0e8a",
+         "\u0e8d",
+         "\u0e94"-"\u0e97",
+         "\u0e99"-"\u0e9f",
+         "\u0ea1"-"\u0ea3",
+         "\u0ea5",
+         "\u0ea7",
+         "\u0eaa"-"\u0eab",
+         "\u0ead"-"\u0eb9",
+         "\u0ebb"-"\u0ebd",
+         "\u0ec0"-"\u0ec4",
+         "\u0ec6",
+         "\u0ec8"-"\u0ecd",
+         "\u0ed0"-"\u0ed9",
+         "\u0edc"-"\u0edd",
+         "\u0f00",
+         "\u0f18"-"\u0f19",
+         "\u0f20"-"\u0f29",
+         "\u0f35",
+         "\u0f37",
+         "\u0f39",
+         "\u0f3e"-"\u0f47",
+         "\u0f49"-"\u0f6a",
+         "\u0f71"-"\u0f84",
+         "\u0f86"-"\u0f8b",
+         "\u0f90"-"\u0f97",
+         "\u0f99"-"\u0fbc",
+         "\u0fc6",
+         "\u1000"-"\u1021",
+         "\u1023"-"\u1027",
+         "\u1029"-"\u102a",
+         "\u102c"-"\u1032",
+         "\u1036"-"\u1039",
+         "\u1040"-"\u1049",
+         "\u1050"-"\u1059",
+         "\u10a0"-"\u10c5",
+         "\u10d0"-"\u10f8",
+         "\u1100"-"\u1159",
+         "\u115f"-"\u11a2",
+         "\u11a8"-"\u11f9",
+         "\u1200"-"\u1206",
+         "\u1208"-"\u1246",
+         "\u1248",
+         "\u124a"-"\u124d",
+         "\u1250"-"\u1256",
+         "\u1258",
+         "\u125a"-"\u125d",
+         "\u1260"-"\u1286",
+         "\u1288",
+         "\u128a"-"\u128d",
+         "\u1290"-"\u12ae",
+         "\u12b0",
+         "\u12b2"-"\u12b5",
+         "\u12b8"-"\u12be",
+         "\u12c0",
+         "\u12c2"-"\u12c5",
+         "\u12c8"-"\u12ce",
+         "\u12d0"-"\u12d6",
+         "\u12d8"-"\u12ee",
+         "\u12f0"-"\u130e",
+         "\u1310",
+         "\u1312"-"\u1315",
+         "\u1318"-"\u131e",
+         "\u1320"-"\u1346",
+         "\u1348"-"\u135a",
+         "\u1369"-"\u1371",
+         "\u13a0"-"\u13f4",
+         "\u1401"-"\u166c",
+         "\u166f"-"\u1676",
+         "\u1681"-"\u169a",
+         "\u16a0"-"\u16ea",
+         "\u16ee"-"\u16f0",
+         "\u1700"-"\u170c",
+         "\u170e"-"\u1714",
+         "\u1720"-"\u1734",
+         "\u1740"-"\u1753",
+         "\u1760"-"\u176c",
+         "\u176e"-"\u1770",
+         "\u1772"-"\u1773",
+         "\u1780"-"\u17d3",
+         "\u17d7",
+         "\u17db"-"\u17dd",
+         "\u17e0"-"\u17e9",
+         "\u180b"-"\u180d",
+         "\u1810"-"\u1819",
+         "\u1820"-"\u1877",
+         "\u1880"-"\u18a9",
+         "\u1900"-"\u191c",
+         "\u1920"-"\u192b",
+         "\u1930"-"\u193b",
+         "\u1946"-"\u196d",
+         "\u1970"-"\u1974",
+         "\u1d00"-"\u1d6b",
+         "\u1e00"-"\u1e9b",
+         "\u1ea0"-"\u1ef9",
+         "\u1f00"-"\u1f15",
+         "\u1f18"-"\u1f1d",
+         "\u1f20"-"\u1f45",
+         "\u1f48"-"\u1f4d",
+         "\u1f50"-"\u1f57",
+         "\u1f59",
+         "\u1f5b",
+         "\u1f5d",
+         "\u1f5f"-"\u1f7d",
+         "\u1f80"-"\u1fb4",
+         "\u1fb6"-"\u1fbc",
+         "\u1fbe",
+         "\u1fc2"-"\u1fc4",
+         "\u1fc6"-"\u1fcc",
+         "\u1fd0"-"\u1fd3",
+         "\u1fd6"-"\u1fdb",
+         "\u1fe0"-"\u1fec",
+         "\u1ff2"-"\u1ff4",
+         "\u1ff6"-"\u1ffc",
+         "\u200c"-"\u200f",
+         "\u202a"-"\u202e",
+         "\u203f"-"\u2040",
+         "\u2054",
+         "\u2060"-"\u2063",
+         "\u206a"-"\u206f",
+         "\u2071",
+         "\u207f",
+         "\u20a0"-"\u20b1",
+         "\u20d0"-"\u20dc",
+         "\u20e1",
+         "\u20e5"-"\u20ea",
+         "\u2102",
+         "\u2107",
+         "\u210a"-"\u2113",
+         "\u2115",
+         "\u2119"-"\u211d",
+         "\u2124",
+         "\u2126",
+         "\u2128",
+         "\u212a"-"\u212d",
+         "\u212f"-"\u2131",
+         "\u2133"-"\u2139",
+         "\u213d"-"\u213f",
+         "\u2145"-"\u2149",
+         "\u2160"-"\u2183",
+         "\u3005"-"\u3007",
+         "\u3021"-"\u302f",
+         "\u3031"-"\u3035",
+         "\u3038"-"\u303c",
+         "\u3041"-"\u3096",
+         "\u3099"-"\u309a",
+         "\u309d"-"\u309f",
+         "\u30a1"-"\u30ff",
+         "\u3105"-"\u312c",
+         "\u3131"-"\u318e",
+         "\u31a0"-"\u31b7",
+         "\u31f0"-"\u31ff",
+         "\u3400"-"\u4db5",
+         "\u4e00"-"\u9fa5",
+         "\ua000"-"\ua48c",
+         "\uac00"-"\ud7a3",
+         "\ud801", //for supplementary characters suport
+         "\ud802", //for supplementary characters suport
+         "\ud834", //for supplementary characters suport
+         "\udc00", //for supplementary characters suport
+         "\udc01", //for supplementary characters suport
+         "\udd7b", //for supplementary characters suport
+         "\uf900"-"\ufa2d",
+         "\ufa30"-"\ufa6a",
+         "\ufb00"-"\ufb06",
+         "\ufb13"-"\ufb17",
+         "\ufb1d"-"\ufb28",
+         "\ufb2a"-"\ufb36",
+         "\ufb38"-"\ufb3c",
+         "\ufb3e",
+         "\ufb40"-"\ufb41",
+         "\ufb43"-"\ufb44",
+         "\ufb46"-"\ufbb1",
+         "\ufbd3"-"\ufd3d",
+         "\ufd50"-"\ufd8f",
+         "\ufd92"-"\ufdc7",
+         "\ufdf0"-"\ufdfc",
+         "\ufe00"-"\ufe0f",
+         "\ufe20"-"\ufe23",
+         "\ufe33"-"\ufe34",
+         "\ufe4d"-"\ufe4f",
+         "\ufe69",
+         "\ufe70"-"\ufe74",
+         "\ufe76"-"\ufefc",
+         "\ufeff",
+         "\uff04",
+         "\uff10"-"\uff19",
+         "\uff21"-"\uff3a",
+         "\uff3f",
+         "\uff41"-"\uff5a",
+         "\uff65"-"\uffbe",
+         "\uffc2"-"\uffc7",
+         "\uffca"-"\uffcf",
+         "\uffd2"-"\uffd7",
+         "\uffda"-"\uffdc",
+         "\uffe0"-"\uffe1",
+         "\uffe5"-"\uffe6",
+         "\ufff9"-"\ufffb"
+      ]
+  >
+}
+
+/**Definition of a comment block*/
+Node comment():{boolean isat=false;Token com; List<String > attokens= new LinkedList<String >();String collect="";}{  ((< MULT >)?
+  (< AT > com=< VARIDENT >{isat=true;attokens.add("@"+com);})?
+  (com= < ALPHAALL > | com=< VARIDENT > | com=< CLASSIDENT >| com=< PACKIDENT >)
+  {if(isat)attokens.add(com+""); else collect+=com+" ";})*
+  {return new Comment(collect,attokens);}}
+/**Definition of class imports**/ 
+Node imports():{List<String>imports=new LinkedList<String>();Token imp,classOrStar;boolean stat=false;}{	  (< IMPORT > (< STATIC >{stat=true;})?
+	   imp=<IMPORTIDENT>{imports.add(imp+"");}< SEM >)*
+	  {return new Import(imports,stat);}
+}
+/**Definition of the program (tree root)**/
+Node program():{List<FunctionDef> funs=new ArrayList<FunctionDef>();FunctionDef fun;Token packagedef=null, importdef;
+                                Node imports=new Literal(1),getenum;List<Node> enums= new LinkedList<Node>();ClassDef classD; List<ClassDef > classes = new ArrayList<ClassDef >();}
+{
+  (< PACKAGE > (packagedef=< PACKIDENT > | packagedef=< VARIDENT >) < SEM >)?
+	imports=imports()  (classD=classdef(){classes.add(classD);}
+| getenum=enumdef(){enums.add(getenum);})* < EOF >
+  {return new Program(classes,imports,enums,funs,packagedef+"");}
+}
+
+/**Definition of the function/variable/class modifiers**/
+Modifier moddef():{int vis=2,grade=4,state=2,fin=0;
+Token type=new Token();
+String comment="";}
+{
+ (type=< PUBLIC >{vis=1;}
+ | type=<  PROTECTED >{vis=0;}
+ | type=< PRIVATE >{vis=-1;})?
+ {if(type.specialToken!=null)
+ 	comment=type.specialToken+""; }
+ (type=< ABSTRACT >{state=1;
+ if(type.specialToken!=null)
+ 	comment=type.specialToken+"";}
+ |type=< STATIC >{state=-1;
+ if(type.specialToken!=null)
+ 	comment=type.specialToken+"";}
+ | type=< FINAL >{fin=1;
+ if(type.specialToken!=null)
+ 	comment=type.specialToken+"";})*
+ 	
+  (type=< TRANSIENT >{grade=-1;}
+ | type=< VOLATILE > {grade=0;}
+ | type=< SYNCHRONIZED >{grade=1;}
+ | type=< NATIVE >{grade=2;}
+ | type=< STRICTFP > {grade=3;})?
+ {if(type.specialToken!=null)
+ 	comment=type.specialToken+"";
+  return new Modifier(vis,grade,state,fin,comment);}}
+
+/**Definition of the datatypes**/
+ReturnType datdef():{int type=0;
+Token classid=new Token(),generic=new Token();
+Node result=new Variable("");
+List<Node >temp = new LinkedList<Node >();
+String ident="";
+boolean isarray=false;}{	((classid=< BOOLEAN >{type=1;}
+	|classid=< BYTE >{type=2;}
+	|classid=< FLOAT >{type=3;}
+	|classid=< DOUBLE >{type=4;}
+	|classid=< INT >{type=5;}
+	|classid=< LONG >{type=6;}
+	|classid=< CHAR >{type=7;})	|classid=< VOID > {type=-1;}
+	|(temp=imps(){if(temp.isEmpty()) result=new Variable("");else result=temp.get(0);}))
+	(LOOKAHEAD(2)< LBRC > < RBRC >{isarray=true;})?
+	{if(type!=0)
+	  result=new Variable(classid+"");
+	  if(classid.specialToken!=null){
+	  return new ReturnType(type,result,classid.specialToken+"",isarray,generic+"");	}
+	 return new ReturnType(type,result,"",isarray,generic+"");}
+}  
+
+/**Definition of a java class.**/
+ClassDef classdef():{Node mod=new Variable(""),comment;
+boolean isinterface=false;Node name,ext=new Variable("");Token extNode=new Token();
+Node expr;
+Token cls=new Token();
+List<Node> implist= new LinkedList<Node>();
+List<Node > varexplist = new LinkedList<Node >();}{  mod=moddef()
+  ((
+  cls=< CLASS > implist=imps(){name=implist.get(0);}
+  (< EXTENDS > implist=imps(){ext=implist.get(0);})?
+  (< IMPLEMENTS > implist=imps())?)
+| (cls=< INTERFACE >{isinterface=true;}
+  implist=imps(){name=implist.get(0);}
+  (< EXTENDS > implist=imps(){ext=implist.get(0);})?))
+  < LBRK >
+  (expr=varexps(){varexplist.add(expr);})*
+  < RBRK >
+  {if(cls.specialToken!=null)
+   	return new ClassDef(name,ext,implist,varexplist,cls.specialToken+"",mod,isinterface);
+   return new ClassDef(name,ext,implist,varexplist,"",mod,isinterface);}
+}
+
+/**The list of implemented interfaces**/
+List<Node> imps():{Token ident,generic; String result;
+Node classnode;
+List<Node> collect = new LinkedList<Node>();
+List<Node > generics = new LinkedList<Node >();}
+{  (ident=<CLASSIDENT>|ident=< ALPHAB >)
+  (< SMALLER >( 
+    generics=imps() < GREATER >)*)?
+	{if(ident.specialToken!=null)
+          collect.add(new Imps(ident+"",generics,ident.specialToken+""));
+	else
+      collect.add(new Imps(ident+"",generics,""));
+	generics=new LinkedList<Node >();}
+   (<COMMA>   (ident=<CLASSIDENT>|ident=< ALPHAB >)
+  (< SMALLER >( 
+    generics=imps() < GREATER >)*)?
+    {if(ident.specialToken!=null)
+          collect.add(new Imps(ident+"",generics,ident.specialToken+""));
+	else
+      collect.add(new Imps(ident+"",generics,""));
+    generics=new LinkedList<Node >();})*
+   {return collect;}}
+
+/**Definition of local fields**/
+FieldDef fielddef(boolean forloop):{ReturnType dat;Modifier mod;Node ass;
+Number array=new Number(-1,-1,-1l,-1f,-1.,0);
+Token ident=new Token();
+String sident=ident+"";
+List<Variable > result=new LinkedList<Variable>();
+List<Number > arraylen = new LinkedList<Number >();
+List<Node> asslist=new LinkedList<Node>();}{
+  mod=moddef()
+  dat=datdef()
+  (ident=< VARIDENT >|ident=< FINIDENT >)
+  (< LBRC > (array=unary(true))? < RBRC >)?
+  (ass=assignment(new Variable("")){asslist.add(ass);})?
+  {result.add(new Variable(ident+""));
+  arraylen.add(array);array=new Number(-1,-1,-1l,-1f,-1.,0);
+  if(forloop)return new FieldDef(result,mod,dat,asslist,arraylen,"",forloop,true);}
+  (< COMMA > (ident=<VARIDENT> | ident=<FINIDENT >)
+  (< LBRC > (array=unary(true))?< RBRC >)?
+  ((< LBRK >)?ass=assignment(new Variable("")){asslist.add(ass);}(<RBRK >)?)?
+  {result.add(new Variable(ident+""));arraylen.add(array);array=new Number(-1,-1,-1l,-1f,-1.,0);})*
+ {return new FieldDef(result,mod,dat,asslist,arraylen,"",forloop,true);} }
+
+/**Definition of an enum*/
+Node enumdef():{Token ident;
+List<String > enumidentlist= new LinkedList<String >();}{
+ < ENUM > ident=< VARIDENT >{enumidentlist.add(ident+"");}
+ < LBRK > ((ident=< CLASSIDENT > | ident=< VARIDENT > | ident=< ALPHA > | ident=< FINIDENT >){enumidentlist.add(ident+"");} (< COMMA >)?)* < RBRK >
+ {return new EnumDef(enumidentlist);}}
+/**Definition of a variable expression(modifiers and datatypes combined)*/
+Node varexps():{Node mod=new Variable(""),dat=new Variable(""),content,ass,params,body;Number array=new Number(-1,-1,-1l,-1f,-1.,0);
+String comment="";
+boolean cons=false,isabstract=false;
+Token ident=new Token(),anno; List<Node > funs = new LinkedList<Node >();
+ List<Node > fields = new LinkedList<Node >();
+ List<Node > asslist = new LinkedList<Node >();
+ List<Node > bodylist = new LinkedList<Node >();
+ List<Node > datlist = new LinkedList<Node >();
+ List<Number> arraylen = new LinkedList<Number >();
+ List<Variable > result = new LinkedList<Variable >();
+ List<Node > exceptions = new LinkedList<Node >();
+ List<String > annotations = new LinkedList<String >();}{
+    (anno=<ANNOTATION>{annotations.add(anno+"");})*	mod=moddef()
+	(dat=enumdef()|	dat=datdef())
+	(ident=< VARIDENT >|ident=< FINIDENT >)?
+	(	  (params = params()(< THROWS > exceptions=imps())?
+	(  < SEM >{isabstract=true;}
+| <LBRK>
+   	(body=one_line(){bodylist.add(body);})*<RBRK>)
+   	{if(ident.specialToken!=null){
+   	  return new FunctionDef(ident+"",params,bodylist,mod,dat,ident.specialToken+"",cons,exceptions,annotations,isabstract);   	}
+ 	return new FunctionDef(ident+"",params,bodylist,mod,dat,"",cons,exceptions,annotations,isabstract);})
+| 
+	(
+	(
+	  (< LBRC > (array=unary(true))? < RBRC >)?
+	  (ass=assignment(new Variable("")){asslist.add(ass);})?
+  	  {result.add(new Variable(ident+""));datlist.add(dat);arraylen.add(array);array=new Number(-1,-1,-1l,-1f,-1.,0);}
+  	(< COMMA > (ident=<VARIDENT> | ident=<FINIDENT > )
+  	(< LBRC > (array=unary(true))? < RBRC >)?
+  	((< LBRK >)?ass=assignment(new Variable("")){asslist.add(ass);}(<RBRK >)?)?
+  	{result.add(new Variable(ident+"")); datlist.add(dat);arraylen.add(array);array=new Number(-1,-1,-1l,-1f,-1.,0);})*) < SEM >
+	{if(ident.specialToken!=null)	{
+	  return new FieldDef(result,mod,dat,asslist,arraylen,ident.specialToken+"",false,false);	}
+ 	return new FieldDef(result,mod,dat,asslist,arraylen,"",false,false);})) 
+ 	
+
+	//{return new VarExps(mod,dat,fields,funs);}
+}
+
+/**Definition of the parameters of a function**/
+Node params():{List<String> result=new ArrayList<String>();List<Node> datlist=new ArrayList<Node>();List<Node> modlist=new ArrayList<Node>();Token ident;Node mod,dat;}
+{
+  <LPAR> (mod=moddef() dat=datdef()
+  ident=<VARIDENT> {result.add(ident+"");modlist.add(mod);datlist.add(dat);} 
+   (<COMMA> mod=moddef() dat=datdef() ident=<VARIDENT>
+   {result.add(ident+"");modlist.add(mod);datlist.add(dat);})*)?<RPAR>
+  {return new Params(modlist,datlist,result);}
+}
+
+/**Definition of a code line in the functionbody**/ 
+Sem one_line():{Node result,com;
+Token specialToken,end=new Token();
+boolean setit=false;int returnornew=-1;}
+{
+(LOOKAHEAD(3)result=operators(){setit=true;}end=<SEM>
+  | result=fielddef(false)< SEM >
+  | result=ifdef()
+  | result=switchcase()
+  | result=loopDef()
+  | result=trycatch()
+  | < RETURN >{returnornew=0;} (< NEW >{returnornew=2;})? result=atom(){setit=true;}< SEM >
+  | < NEW >{returnornew=1;} result=varNameOrFunctionCall(){setit=true;}< SEM >
+  | result=exception(){setit=true;}< SEM >)
+   {return new Sem(result,setit,"",returnornew);}
+}
+
+/**Defines the throwing of exceptions.*/
+Node exception():{Node name;boolean isnew=false;}{	< THROW > (< NEW >{isnew=true;})? name=varNameOrFunctionCall()
+	{return new Except(name,isnew);}	
+}
+
+/**The definition of if/elseif/else**/
+IfDef ifdef():{List<Node> bodylist=new LinkedList<Node>();
+List<Node> exprlist=new LinkedList<Node>();
+Node i,body;}
+{< IF > <LPAR>i=operators(){exprlist.add(i);}<RPAR>
+  <LBRK> (body=one_line(){bodylist.add(body);})* <RBRK>
+ (< ELSEIF ><LPAR>i=operators(){exprlist.add(i);}< RPAR >
+  <LBRK> (body=one_line(){bodylist.add(body);})*<RBRK>)*
+ (< ELSE ><LBRK> (body=one_line(){bodylist.add(body);})*<RBRK>)?
+  {return new IfDef(bodylist,exprlist,false);}
+}
+
+/**Definition of the ternary if expression.*/
+IfDef ternary(Node i2):{List<Node> bodylist=new LinkedList<Node>();
+List<Node> exprlist=new LinkedList<Node>();
+Node i,body;}{
+  {exprlist.add(i2);}
+   < QUEST > body=atom(){bodylist.add(body);}
+   < DP >    body=atom(){bodylist.add(body);}
+  {return new IfDef(bodylist,exprlist,true);}
+}
+
+/**The definition of switch/case**/
+Node switchcase():{
+  Node casex,exp;
+  Token ident=new Token();
+  List<Node> cases = new LinkedList<Node>();
+  List<Node >constants=new LinkedList<Node >();
+  List<Integer > hasbreak=new LinkedList<Integer >();
+  int defaultpos=-1;}{	< SWITCH > < LPAR > exp=operators() < RPAR > < LBRK >
+	(LOOKAHEAD(2)< CASE >
+	(exp=atom(){constants.add(exp);} | ident=< FINIDENT >{constants.add(new Variable(ident+""));})
+	 < DP > casex=casebody(){cases.add(casex);}
+	(< BREAK > < SEM >{hasbreak.add(cases.size()-1);})?)*
+	(< DEFT > < DP > casex=casebody() {cases.add(casex);defaultpos=cases.size()-1;}
+	 (<BREAK ><SEM >{hasbreak.add(cases.size()-1);})?)? 
+	(< CASE >(exp=atom(){constants.add(exp);} | ident=< FINIDENT >{constants.add(new Variable(ident+""));})
+	< DP > casex=casebody(){cases.add(casex);}
+	(< BREAK > < SEM >{hasbreak.add(cases.size()-1);})?)* < RBRK >
+	{return new Switch(cases,constants,exp,defaultpos,hasbreak);}
+}
+
+/**The defintion of a case body in a switch/case statement**/
+Node casebody():{Node line; List<Node> lines= new LinkedList<Node>();}
+{
+	 (line=one_line(){lines.add(line);})*
+	  {return new Casebody(lines);}	
+}
+
+/**The definition of a try/catch block**/
+Node trycatch():{Node trybody,catchbody,finallybody;List<Node > catchbodies = new LinkedList<Node >();List<Node > catchargs = new LinkedList<Node >();boolean hasfinally=false;}{	< TRY > <LBRK > trybody=casebody()< RBRK >
+	(< CATCH > catchbody=params(){catchargs.add(catchbody);}
+	 <LBRK > catchbody=casebody(){catchbodies.add(catchbody);}<RBRK >)+
+	(< FINALLY > <LBRK > finallybody=casebody(){catchbodies.add(finallybody);hasfinally=true;}<RBRK >)?	{return new TryCatch(trybody,catchargs,catchbodies,hasfinally);}		
+}
+
+/**Declaration of for/foreach/while/dowhile loops**/
+Node loopDef():{Node exp,
+body=new Comment("",new LinkedList<String >());
+List<Node> bodylist=new LinkedList<Node>();
+List<Node >exps=new LinkedList<Node>();
+Token ident;int loop=-2;}
+{
+  ((< FOR >< LPAR >(exp = fielddef(true){exps.add(exp);})?
+   (< SEM >{loop=-1;}
+    (exp=operators(){exps.add(exp);})? < SEM >
+    (exp=operators(){exps.add(exp);})?
+| < DP >{loop=2;}
+   (ident=<PACKIDENT >|ident=< VARIDENT >){exps.add(new Variable(ident+""));}
+   )
+  < RPAR ><LBRK> (body=one_line())* {bodylist.add(body);}<RBRK>)
+  
+| < DO >{loop=1;}
+  <LBRK> (body=one_line())* {bodylist.add(body);}<RBRK>
+  < WHILE > < LPAR > exp = operators(){exps.add(exp);}< RPAR >< SEM >
+  
+| < WHILE >{loop=0;}< LPAR > exp = operators(){exps.add(exp);}< RPAR >
+  <LBRK> (body=one_line())* {bodylist.add(body);}<RBRK>)
+  
+   {if(loop>-2)return new Loop(bodylist,loop,exps);}  
+}
+
+Node operators() : {Node i1=new Variable(""); Node i2=new Variable("");boolean inMult=false,other=false,sem=false,eq=false;}
+{
+  	i1=preinc()
+    (i1=assignment(i1))?
+  	i1=term(i1)
+  	i1=smallgreat(i1)
+	i1=greater(i1)
+	i1=addmin(i1)
+    i1=modulo(i1)
+	i1=shift(i1)
+    i1=andor(i1)
+    i1=postinc(i1)
+  {return i1;}
+}
+
+/**Definition of the shift operations**/
+Node addmin(Node i2) : {Node i; boolean add=false,eq=false;}
+{
+   	  ((<PLUS>{add=true;}
+   	  |< PLUSEQ >{add=true;eq=true;}
+   	  |< MINUSEQ > {add=false;eq=true;}
+   	  |<MINUS>{add=false;})  
+       i=operators() {if(add)
+       return new Add(i2,i,eq);
+       return new Minus(i2,i,eq);})
+| {return i2;}
+}    
+
+
+/**Definition of the and/or operations**/
+Node andor(Node i2) : {Node i; int mode=0;}
+{
+	((< OR >{mode=4;}| < OREQ >{mode=6;}|< OROR >{mode=5;}
+	|< BITOR >{mode=7;}|< BITOREQ >{mode=8;}
+	|< AND > {mode=1;}| < ANDEQ >{mode=3;}|<ANDAND >{mode=2;})
+	i=operators(){return new AndOr(i2,i,mode);})
+	| {return i2;}
+}
+
+/**Definition of the and/or operations**/
+Node modulo(Node i2) : {Node i;boolean eq;}
+{
+	((< MODULO >{eq=false;}| < MODEQ >{eq=true;})
+	i=operators()
+	{return new Modulo(i2,i,eq);})
+| 	{return i2;}
+}
+
+/**Definition of an assignment**/
+Node assignment(Node i2) : {Node i;Token n;boolean insertnew=false;}
+{
+	< INIT >(
+	  i=atom() (i=ternary(i))?
+	|  < NEW >{insertnew=true;} i=varNameOrFunctionCall()
+	| n=< FINIDENT >{i=new Variable(""+n);}
+	| < THIS >{i=new Variable("this");}
+)
+	{return new Assignment(i2,i,insertnew);}
+}
+
+/**Definition of the shift operations**/
+Node shift(Node i2) : {Node i; boolean left=false,doit=false;int eq=0;}
+{
+	((< SHIFTLEFT >{left=true; doit=true;}
+	|< SHIFTLEFTEQ >{left=true;doit=true;eq=1;}
+	|< SHIFTRIGHT > {doit=true;}
+	|< SHIFTRIGHTEQ > {doit=true;eq=1;}
+	|< SHIFTRIGHTDOUBLE >{doit=true;eq=2;}
+	|< SHIFTRIGHTEQEQ >{doit=true;eq=3;})
+	i=operators(){return new Shift(i2,i,left,eq);})
+| {return i2;}
+}
+
+/**Definition of the preinc/predec operation**/
+Node preinc() : {Node i; int mode=-1;}
+{	(< PLUSPLUS >{mode=0;}
+	|< MINUSMINUS >{mode=1;}
+	|< NOT >{mode=2;}
+	|< TILDE >{mode=3;})?	i=atom()
+	{switch(mode){
+	  case 0: return new Add(new Variable("+"),i);
+	  case 1: return new Minus(new Variable("-"),i);
+	  case 2: return new NotDef(i,true);
+	  case 3: return new NotDef(i,false);
+	  default:return i;
+	}	}
+}
+
+/**Definition of the postinc/postdec operation**/
+Node postinc(Node i) : {boolean inc=false; boolean doit=false;}
+{
+	((< PLUSPLUS >{inc=true; doit=true;}
+	|< MINUSMINUS >{inc=false; doit=true;})
+	{if(doit && inc)
+	 	return new Add(i,new Variable("+"));
+	 else if(doit && !inc)
+	  return new Minus(i,new Variable("-"));
+	  })
+|{return i;}	
+}
+
+Node greater(Node i2) : {Node i; int mode=0;}
+{
+	((< Equals >{mode=1;}|< NotEqual > {mode=2;}
+	| < INSTANCEOF >{mode=3;})
+	i=atom(){return new Equals(i2,i,mode);})
+| 	{return i2;}
+}
+
+/**Definition of the shift operations**/
+Node smallgreat(Node i2) : {Node i; boolean left=false;boolean eq;}
+{
+	((< GREATER >{left=false; eq=false;} | < GREATEQ > {left=false; eq=true;}
+	|< SMALLER > {left=true; eq=false;}| < SMALLEQ > {left=true; eq=true;})
+	i=atom(){return new Greater(i2,i,left,eq);})
+| {return i2;}
+}    
+/**Definition of the mult/div operations**/
+Node term(Node i2) : {Node i=new Variable("");boolean inMult=false;boolean eq=false;}
+{
+    (     (<DIV>{inMult=false;}|<DIVEQ>{inMult=false;eq=true;}|
+    <MULT>{inMult=true;}|<MULTEQ>{inMult=true;eq=true;})
+		i=atom()
+     {if(inMult)
+          return new Mult(i2,i,eq);
+     else if(!inMult)
+         return new Div(i2,i,eq);}       )
+| {return i2;}
+}
+
+/**Differentiation from a varName, an unary constant and a FunctionCall**/
+Node atom() : {Node i=new Variable(""),dat=new Variable("");Token t;boolean typecast=false;}
+{
+(t=< CHARDEF >{return new StringOrCharConst(t+"",false);}
+|t=< STRINGDEF >{return new StringOrCharConst(t+"",true);})
+|( 
+ (LOOKAHEAD(5)< LPAR >dat=datdef(){typecast=true;}< RPAR >)?
+ (   i=unary(false){return new Atom(i,dat,false,typecast);}
+| (t=< TRUE >|t=< FALSE > | t=< NULL >)
+  {return new StringOrCharConst(t+"",true);}
+| i=varNameOrFunctionCall() {return new Atom(i,dat,false,typecast);}
+| i=ternary(i){return new Atom(i,dat,false,typecast);}
+| <LPAR> i=operators()<RPAR> {return new Atom(i,dat,true,typecast);}))
+}
+
+/**Differentiation of a varName or a functionCall**/
+Node varNameOrFunctionCall() : {Token ident=new Token(),generic=new Token();
+ boolean isFunCall=false,generics=false;
+ Number array=new Number(-1,-1,-1l,-1f,-1.,0);
+ List<Node> args=new LinkedList<Node>();
+ List<Node > varexplist= new LinkedList<Node >();
+ Node arg,expr;}
+{
+  (ident=<VARIDENT>
+  |(ident=< CLASSIDENT > (LOOKAHEAD(3)< SMALLER > generic=< CLASSIDENT >   < GREATER >)?)
+  | ident=< ELEMIDENT >)+
+  (< LBRC > array=unary(true)<RBRC >)? 
+  (<LPAR> {isFunCall=true;}(arg=operators(){args.add(arg);}
+   (<COMMA> arg=operators(){args.add(arg);})*)?<RPAR>
+  (< LBRK >(expr=varexps(){varexplist.add(expr);})*< RBRK >)?)?
+  {return isFunCall?new FunCall(ident+"",args,varexplist,generic+""):new Variable(ident+"",array);}
+}
+
+
+/**Definition of a positive or negative unary**/
+Number unary(boolean array) :{Number temp;boolean minus=false;String result="";}
+{
+  (< MINUS > {minus=true;})?
+  (token=< CONSTANTI >
+  {if(minus)
+  		result="-"+token;
+  	else		result=""+token;
+	if(result.contains("x") || result.contains("X"))
+	    return new Number(0,Integer.parseInt(result.substring(2,result.length()),16),-1l,-1f,-1.,1);
+	else if(result.charAt(0)=='0' && result.length()>1)
+		return new Number(0,Integer.parseInt(result,8),-1l,-1f,-1.,2);
+   	return new Number(0,Integer.parseInt(result),-1l,-1f,-1.,0);})
+| (token=< CONSTANTL >
+  {if(array)
+  	throw new ParseException();
+ if(minus)
+  		result="-"+token;
+  	else
+		result=""+token;
+	if(result.contains("x") || result.contains("X"))
+	    return new Number(0,Integer.parseInt(result.substring(2,result.length()),16),-1l,-1f,-1.,1);
+	else if(result.charAt(0)=='0' && result.length()>1)
+		return new Number(0,Integer.parseInt(result,8),-1l,-1f,-1.,2);
+   	return new Number(0,Integer.parseInt(result),-1l,-1f,-1.,0);})
+| (token=< CONSTANTF >
+  {if(array)
+  	throw new ParseException();
+  	if(minus)
+  		result="-"+token;
+  	else
+		result=""+token;
+    return new Number(2,-1,-1l,new Float(result),-1.,0);})
+| (token=< CONSTANTD >
+  {if(array)
+  	throw new ParseException();
+  	if(minus)
+  		result="-"+token;
+  	else
+		result=""+token;
+    return new Number(3,-1,-1l,-1f,new Double(result),0);})
+  
+}
